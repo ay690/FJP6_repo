@@ -72,19 +72,31 @@ browserPromise.then(function(browser){
     return domSelectPromise;
 }).then(function(){
     console.log("warmup Selected");
-    return page.waitForSelector('.ui-btn.ui-btn-normal.primary-cta.ui-btn-line-primary.ui-btn-styled');
+    return page.waitForSelector('.challenges-list .js-track-click.challenge-list-item');
 }).then(function(){
-   
+    let arrPromise = page.evaluate(function(){
+        let arr = [];
+        let aTags = document.querySelectorAll('.challenges-list .js-track-click.challenge-list-item');
+        for(let i=0;i<aTags.length;i++){
+            let link =  aTags[i].href;
+            console.log(link);
+            arr.push(link);
+        }
+        return arr;
+    })
+    return arrPromise;
+}).then(function(questionsArr){
+    console.log(questionsArr);
 })
 
 function waitAndClick(selector){
     return new Promise(function(resolve,reject){
-        let waitPromise = page.waitForSelector(selector);
+        let waitPromise = page.waitForSelector(selector); //selector ka promise karo
         waitPromise.then(function(){
-            let clickPromise = page.click(selector);
+            let clickPromise = page.click(selector);//fir milne ke baad wait and then click on the button
             return clickPromise;
         }).then(function(){
-            resolve();
+            resolve(); //isse aage waale promise ke saath chaining karni padegi
         });
     })
 }
