@@ -3,7 +3,12 @@ const puppeteer = require("puppeteer");
 const mail = "tilino4700@eosbuzz.com";
 const pass = "12345678";
 
-let browserPromise = puppeteer.launch({ headless: false });
+let browserPromise = puppeteer.launch({ 
+    headless : false,
+    args : ['--start-maximized'],
+    defaultViewport : null
+});
+
 let page;
 browserPromise.then(function(browser){
     console.log("Browser is opened");
@@ -15,13 +20,17 @@ browserPromise.then(function(browser){
     let urlPromise = page.goto('https://www.hackerrank.com/');
     return urlPromise;
 }).then(function(){
-    console.log("Hackerrank page is opened");
-    let waitPromise = page.waitForSelector("ul.menu a");
-    return waitPromise;
-}).then(function(){
-    let clickPromse = page.click("ul.menu a");
-    return clickPromse;
-}).then(function(){
+    return waitAndClick("ul.menu a");
+})
+// .then(function(){
+//     console.log("Hackerrank page is opened");
+//     let waitPromise = page.waitForSelector("ul.menu a");
+//     return waitPromise;
+// }).then(function(){
+//     let clickPromse = page.click("ul.menu a");
+//     return clickPromse;
+// })
+.then(function(){
     let waitPromise = page.waitForSelector(".fl-module-content.fl-node-content .fl-button");
     return waitPromise;
 }).then(function(){
@@ -65,5 +74,17 @@ browserPromise.then(function(browser){
     console.log("warmup Selected");
     return page.waitForSelector('.ui-btn.ui-btn-normal.primary-cta.ui-btn-line-primary.ui-btn-styled');
 }).then(function(){
-    
+   
 })
+
+function waitAndClick(selector){
+    return new Promise(function(resolve,reject){
+        let waitPromise = page.waitForSelector(selector);
+        waitPromise.then(function(){
+            let clickPromise = page.click(selector);
+            return clickPromise;
+        }).then(function(){
+            resolve();
+        });
+    })
+}
