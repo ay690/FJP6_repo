@@ -1,15 +1,9 @@
-
 const puppeteer = require("puppeteer");
 const mail = "tilino4700@eosbuzz.com";
 const pass = "12345678";
 const code = require('./code');
 
-let browserPromise = puppeteer.launch({ 
-    headless : false,
-    args : ['--start-maximized'],
-    defaultViewport : null
-});
-
+let browserPromise = puppeteer.launch({ headless: false, defaultViewport: null,args: ['--start-fullscreen'] });
 let page;
 browserPromise.then(function(browser){
     console.log("Browser is opened");
@@ -21,24 +15,14 @@ browserPromise.then(function(browser){
     let urlPromise = page.goto('https://www.hackerrank.com/');
     return urlPromise;
 }).then(function(){
-    return waitAndClick("ul.menu a");
-})
-// .then(function(){
-//     console.log("Hackerrank page is opened");
-//     let waitPromise = page.waitForSelector("ul.menu a");
-//     return waitPromise;
-// }).then(function(){
-//     let clickPromse = page.click("ul.menu a");
-//     return clickPromse;
-// })
-.then(function(){
+    return waitAndClick('ul.menu a');
+}).then(function(){
     let waitPromise = page.waitForSelector(".fl-module-content.fl-node-content .fl-button");
     return waitPromise;
 }).then(function(){
     let domClickPromse = page.evaluate(function(){
         let btns = document.querySelectorAll(".fl-module-content.fl-node-content .fl-button");
-        btns[1].click();  //since there were two buttons one for "companies" and the other one was "developer" 
-        //we needed to select and click on second one i.e. "for developer" hence we used btns[1].click(); 
+        btns[1].click();
         return;
     });
     return domClickPromse;
@@ -55,13 +39,9 @@ browserPromise.then(function(browser){
     let clickPromse = page.click('button[data-analytics="LoginPassword"]');
     return clickPromse;
 }).then(function(){
-    console.log("Login successful");
-    let waitPromise = page.waitForSelector('[data-automation="algorithms"]');
-    return waitPromise;
-}).then(function(){
-    let clickPromise = page.click('[data-automation="algorithms"]');
-    return clickPromise;
-}).then(function(){  //For warm up
+    return waitAndClick('[data-automation="algorithms"]');
+})
+.then(function(){
     return page.waitForSelector(".filter-group");
 }).then(function(){
     let domSelectPromise = page.evaluate(function(){
@@ -89,31 +69,43 @@ browserPromise.then(function(browser){
     return arrPromise;
 }).then(function(questionsArr){
     console.log(questionsArr);
+    console.log(code.answers.length);
     let questionPromise = questionSolver(questionsArr[0],code.answers[0]);
+    for(let i=1;i<questionsArr.length;i++){
+        questionPromise = questionPromise.then(function(){
+            let nextQuestionPromise = questionSolver(questionsArr[i],code.answers[i]);
+            return nextQuestionPromise;
+        })
+    }
+    return questionPromise;
+}).then(function(){
+    console.log("All the warm up questions have been submitted!!!");
 })
+
+
 
 function waitAndClick(selector){
     return new Promise(function(resolve,reject){
-        let waitPromise = page.waitForSelector(selector); //selector ka promise karo
+        let waitPromise = page.waitForSelector(selector);
         waitPromise.then(function(){
-            let clickPromise = page.click(selector);//fir milne ke baad wait and then click on the button
+            let clickPromise = page.click(selector);
             return clickPromise;
         }).then(function(){
-            resolve(); //isse aage waale promise ke saath chaining karni padegi
+            resolve();
         });
     })
 }
+
 
 function questionSolver(question,answer){
     return new Promise(function(resolve,reject){
         let linkPromise = page.goto(question);
         linkPromise.then(function(){
-            return waitAndClick('.checkBoxWrapper input'); //click on input box
+            return waitAndClick('.checkBoxWrapper input');
         }).then(function(){
-            return waitAndClick('.ui-tooltip-wrapper textarea'); //click on input text area
+            return waitAndClick('.ui-tooltip-wrapper textarea');
         }).then(function(){
-            console.log("on the text area");
-            let typePromise = page.type('.ui-tooltip-wrapper textarea',answer);//type your answer in input area
+            let typePromise = page.type('.ui-tooltip-wrapper textarea',answer);
             return typePromise;
         }).then(function(){
             let holdControl = page.keyboard.down('Control');
@@ -139,9 +131,13 @@ function questionSolver(question,answer){
             let pressV = page.keyboard.press('V');
             return pressV;
         }).then(function(){
-            return waitAndClick('.ui-btn.ui-btn-normal.ui-btn-primary.pull-right.hr-monaco-submit.ui-btn-styled'); //click on submit button
+            let upControl = page.keyboard.up('Control');
+            return upControl;
+        }).then(function(){
+            return waitAndClick('.ui-btn.ui-btn-normal.ui-btn-primary.pull-right.hr-monaco-submit.ui-btn-styled');
         }).then(function(){
             console.log("questions submitted success");
+            resolve();
         })
     })
 }
